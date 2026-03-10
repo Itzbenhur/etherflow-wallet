@@ -1,0 +1,504 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ETH Wallet</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 500px;
+        }
+
+        .card {
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+            animation: slideUp 0.5s ease-out;
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 24px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 28px;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+
+        .network-badge {
+            display: inline-block;
+            background: rgba(255, 255, 255, 0.2);
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            margin-top: 8px;
+        }
+
+        .content {
+            padding: 24px;
+        }
+
+        .section {
+            margin-bottom: 24px;
+        }
+
+        .section-title {
+            font-size: 12px;
+            font-weight: 700;
+            color: #667eea;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 12px;
+        }
+
+        .balance-display {
+            background: linear-gradient(135deg, #f5f7fa 0%, #eff2f5 100%);
+            padding: 20px;
+            border-radius: 12px;
+            text-align: center;
+            margin-bottom: 16px;
+        }
+
+        .balance-label {
+            font-size: 12px;
+            color: #8b92a0;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+        .balance-amount {
+            font-size: 32px;
+            font-weight: 700;
+            color: #2d3748;
+            font-family: 'Monaco', 'Courier New', monospace;
+        }
+
+        .balance-usd {
+            font-size: 14px;
+            color: #a0aec0;
+            margin-top: 4px;
+        }
+
+        .button-group {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+
+        button {
+            padding: 12px 20px;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-primary:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(102, 126, 234, 0.3);
+        }
+
+        .btn-primary:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .btn-secondary {
+            background: #f0f4f8;
+            color: #667eea;
+            border: 2px solid #e2e8f0;
+        }
+
+        .btn-secondary:hover:not(:disabled) {
+            background: #e2e8f0;
+            transform: translateY(-2px);
+        }
+
+        .form-group {
+            margin-bottom: 16px;
+        }
+
+        label {
+            display: block;
+            font-size: 12px;
+            font-weight: 600;
+            color: #4a5568;
+            margin-bottom: 6px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        input {
+            width: 100%;
+            padding: 12px 16px;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 14px;
+            font-family: 'Monaco', 'Courier New', monospace;
+            transition: all 0.3s ease;
+        }
+
+        input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            animation: fadeIn 0.3s ease-out;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+            to {
+                opacity: 1;
+            }
+        }
+
+        .modal-content {
+            background: white;
+            border-radius: 16px;
+            padding: 32px;
+            width: 90%;
+            max-width: 450px;
+            max-height: 90vh;
+            overflow-y: auto;
+            animation: slideUp 0.3s ease-out;
+        }
+
+        .modal-header {
+            font-size: 20px;
+            font-weight: 700;
+            color: #2d3748;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .close-btn {
+            background: none;
+            color: #a0aec0;
+            font-size: 24px;
+            padding: 0;
+            width: 30px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .close-btn:hover {
+            color: #667eea;
+        }
+
+        .address-display {
+            background: #f7fafc;
+            padding: 16px;
+            border-radius: 8px;
+            word-break: break-all;
+            font-family: 'Monaco', 'Courier New', monospace;
+            font-size: 12px;
+            color: #2d3748;
+            margin-bottom: 16px;
+        }
+
+        .qr-code {
+            text-align: center;
+            margin: 20px 0;
+        }
+
+        .qr-code canvas {
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 10px;
+        }
+
+        .copy-btn {
+            width: 100%;
+            background: #e6efff;
+            color: #667eea;
+            border: 2px solid #667eea;
+            margin-top: 12px;
+        }
+
+        .copy-btn:hover {
+            background: #667eea;
+            color: white;
+        }
+
+        .alert {
+            padding: 12px 16px;
+            border-radius: 8px;
+            font-size: 13px;
+            margin-bottom: 16px;
+            animation: slideUp 0.3s ease-out;
+        }
+
+        .alert-success {
+            background: #f0fff4;
+            color: #22543d;
+            border: 1px solid #c6f6d5;
+        }
+
+        .alert-error {
+            background: #fff5f5;
+            color: #742a2a;
+            border: 1px solid #fc8181;
+        }
+
+        .alert-info {
+            background: #ebf8ff;
+            color: #2c5282;
+            border: 1px solid #90cdf4;
+        }
+
+        .spinner {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top-color: white;
+            animation: spin 0.8s linear infinite;
+            margin-right: 8px;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .tab-group {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 20px;
+            background: #f7fafc;
+            padding: 4px;
+            border-radius: 8px;
+        }
+
+        .tab {
+            flex: 1;
+            padding: 10px;
+            border: none;
+            background: transparent;
+            color: #718096;
+            font-weight: 600;
+            font-size: 13px;
+            cursor: pointer;
+            border-radius: 6px;
+            transition: all 0.2s ease;
+        }
+
+        .tab.active {
+            background: white;
+            color: #667eea;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 600;
+        }
+
+        .status-connected {
+            background: #c6f6d5;
+            color: #22543d;
+        }
+
+        .status-disconnected {
+            background: #fed7d7;
+            color: #742a2a;
+        }
+
+        .divider {
+            height: 1px;
+            background: #e2e8f0;
+            margin: 20px 0;
+        }
+
+        .tx-info {
+            background: #f7fafc;
+            padding: 12px;
+            border-radius: 8px;
+            font-size: 12px;
+            color: #4a5568;
+            margin-bottom: 12px;
+        }
+
+        .tx-info strong {
+            color: #2d3748;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Main Card -->
+        <div class="card">
+            <!-- Header -->
+            <div class="header">
+                <h1>💰 ETH Wallet</h1>
+                <div class="network-badge" id="networkBadge">
+                    <span id="networkName">Disconnected</span>
+                </div>
+            </div>
+
+            <!-- Content -->
+            <div class="content">
+                <!-- Connection Section -->
+                <div class="section">
+                    <button class="btn-primary" id="connectBtn" onclick="connectWallet()" style="width: 100%; margin-bottom: 12px;">
+                        Connect Wallet
+                    </button>
+                </div>
+
+                <!-- Tabs -->
+                <div class="tab-group">
+                    <button class="tab active" onclick="switchTab('balance')">Balance</button>
+                    <button class="tab" onclick="switchTab('send')">Send</button>
+                    <button class="tab" onclick="switchTab('receive')">Receive</button>
+                </div>
+
+                <!-- Alerts Container -->
+                <div id="alertContainer"></div>
+
+                <!-- Balance Tab -->
+                <div class="tab-content active" id="balanceTab">
+                    <div class="section">
+                        <div class="balance-display">
+                            <div class="balance-label">Account Balance</div>
+                            <div class="balance-amount" id="balanceAmount">0.00 ETH</div>
+                            <div class="balance-usd" id="balanceUSD">$0.00</div>
+                        </div>
+                        <div class="address-display" id="accountAddress" style="cursor: pointer;" onclick="copyToClipboard()">
+                            Click "Connect Wallet" to display address
+                        </div>
+                        <button class="btn-secondary" onclick="refreshBalance()" style="width: 100%;">
+                            🔄 Refresh Balance
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Send Tab -->
+                <div class="tab-content" id="sendTab">
+                    <div class="section">
+                        <div class="form-group">
+                            <label for="recipientAddress">Recipient Address</label>
+                            <input type="text" id="recipientAddress" placeholder="0x..." />
+                        </div>
+                        <div class="form-group">
+                            <label for="amount">Amount (ETH)</label>
+                            <input type="number" id="amount" placeholder="0.1" step="0.0001" min="0" />
+                        </div>
+                        <div class="tx-info">
+                            <strong>Gas Estimate:</strong> <span id="gasEstimate">-</span> GWEI
+                        </div>
+                        <button class="btn-primary" onclick="sendETH()" style="width: 100%;">
+                            📤 Send ETH
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Receive Tab -->
+                <div class="tab-content" id="receiveTab">
+                    <div class="section">
+                        <label style="margin-bottom: 12px;">Your Address</label>
+                        <div class="address-display" id="receiveAddress" style="cursor: pointer;" onclick="copyToClipboard()">
+                            Click "Connect Wallet" to display address
+                        </div>
+                        <div class="qr-code" id="qrCode"></div>
+                        <button class="btn-secondary" onclick="copyToClipboard()" style="width: 100%;">
+                            📋 Copy Address
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal for Transaction Status -->
+    <div class="modal" id="txModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <span id="txModalTitle">Transaction Status</span>
+                <button class="close-btn" onclick="closeTxModal()">✕</button>
+            </div>
+            <div id="txModalBody"></div>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/web3.js/1.10.4/web3.min.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>
